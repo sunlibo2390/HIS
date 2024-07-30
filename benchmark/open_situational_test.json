@@ -1,0 +1,50 @@
+{
+    "Openness": {
+        "Scenario": "You are invited to a cross-cultural workshop where you need to collaborate with people from different backgrounds to create a presentation project. The group members have vastly different opinions and styles.",
+        "NPC_Setting": "Culturally diverse team member who proposes a highly innovative and unconventional project idea that might sound counterintuitive at first.",
+        "NPC_prompt": "You are a culturally diverse team member at a workshop, you propose an unconventional project idea to a participant.",
+        "Interaction": "Observe how the participant reacts to the idea, whether they can openly discuss its pros and cons, and whether they are willing to try or at least consider this non-traditional approach."
+    },
+    "Conscientiousness": {
+        "Scenario": "You are the leader of a project team, and the project is nearing its deadline but several key tasks are behind schedule.",
+        "NPC_Setting": "Team member who is behind schedule and tries to shirk responsibility.",
+        "NPC_prompt": "You are a team member who is behind schedule. You talk with a participant who is responsible for one of these tasks. You need to appear careless, irresponsible, and unapologetic for what you did and try to shirk responsibility. ",
+        "Interaction": "Watch how the participant responds, whether they can devise practical solutions, show leadership and responsibility, and how they ensure the project is completed on time."
+    },
+    "Extraversion": {
+        "Scenario": "At a neighborhood barbecue, you find yourself among many new faces. Your goal is to mingle and make new friends.",
+        "NPC_Setting": "A friendly neighbor who recently moved in and is eager to meet new people and get involved in the community. He is known for his lively personality and welcoming attitude.",
+        "NPC_prompt": "You are a friendly new neighbor at a neighborhood barbecue, you initiate a conversation with a participant. Start and maintain engaging dialogue, and attempt to make a new friend.",
+        "Interaction": "Observe how the participant approaches this neighbor, starts a conversation, maintains engaging and friendly dialogue, and uses this interaction to form a new friendship."
+    },
+    "Agreeableness": {
+        "Scenario": "During a team meeting, a team member strongly disagrees with a decision that everyone else agrees on and becomes very emotional.",
+        "NPC_Setting": "Emotionally charged opposer who strongly disagrees with the team's decision and shows significant discontent.",
+        "NPC_prompt": "You are a team member who strongly disagrees with a group decision during a meeting. You express your dissent to a participant.",
+        "Interaction": "Observe how the participant handles this conflict, whether they can show empathy and understanding, how they communicate to ease tensions, and whether they can find a resolution that satisfies everyone."
+    },
+    "Neuroticism": {
+        "Scenario": "You are preparing for an important presentation when suddenly informed that it must be completed in half the originally planned time. Moreover, the audience will include several industry leaders whom you greatly respect.",
+        "NPC_Setting": "Organizer who notifies of the sudden change in presentation time.",
+        "NPC_prompt": "You are the organizer of a presentation event, you inform a participant in person that their presentation time will be halved, although they will present soon.",
+        "Interaction": "Evaluate how the participant reacts to this unexpected situation, observe whether they can remain calm, how they manage their stress and emotions, and what strategies they adopt to adapt to this change."
+    },
+    "Artist": {
+        "Scenario": "During a casual meet-up, a friend who has recently started a small business mentions they need to design a visually appealing logo that reflects their brand's commitment to sustainability and organic products. They lack the skills for such a professional visual creation and ask if you can help.",
+        "NPC_Setting": "Friend who is seeking a professional and creative design that can effectively communicate the brand's core values to its target audience.",
+        "NPC_prompt": "You are a small business owner needing a professional logo that reflects sustainability. You discuss your needs with your friend, asking for their design ideas.",
+        "Interaction": "Evaluate if the participant can conceptualize and propose a design that not only fits the theme but also showcases advanced artistic techniques and a professional understanding of visual branding."
+    },
+    "Programmer": {
+        "Scenario": "A friend studying computer science is struggling with a programming assignment that involves creating a simple database management system. They are having trouble understanding how to implement certain functions in Python and ask for your assistance.",
+        "NPC_Setting": "Friend who needs help understanding complex programming concepts and debugging their current code.",
+        "NPC_prompt": "You are a computer science student struggling with a programming assignment. You ask your friend for help with implementing functions in Python and debugging.",
+        "Interaction": "Observe the participant's ability to explain and solve the programming problems, their effectiveness in debugging, and their willingness to teach complex concepts, which are key indicators of a proficient programmer's skill set."
+    },
+    "Doctor": {
+        "Scenario": "While attending a family picnic, a child suddenly starts showing symptoms of an allergic reaction. There is no immediate medical help available.",
+        "NPC_Setting": "A concerned parent who is unsure about the steps to take.",
+        "NPC_prompt": "You are a parent at a picnic, your child shows symptoms of an allergic reaction, but you have no idea how to give first aid. You desperatly ask a participant for help.",
+        "Interaction": "Evaluate the participant's response to the situation, particularly their ability to stay calm, provide appropriate first aid, and manage the situation until professional help can be accessed, reflecting the competencies typical of a medical professional."
+    }
+}

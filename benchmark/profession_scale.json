@@ -1,0 +1,242 @@
+[
+    {
+        "question": "I can integrate symbols and metaphors into my artwork to convey deeper meanings and narratives.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I am competent in managing art projects, including planning, budgeting, and executing large-scale works.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I understand and practice various framing and presentation techniques to enhance the display of my artwork.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I maintain a professional portfolio that accurately represents my range of skills and experiences.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I frequently sketch, paint, or engage in other visual arts as a form of expression.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I effectively manage my time between creating artwork and performing administrative tasks related to my art career.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I have a strong network of contacts in the art world, which I use to further my career opportunities and collaborations.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I often read books, articles, or blogs about art and artists.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I spend a significant portion of my time experimenting with new techniques or materials.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I engage in critical discussions about art, contributing to debates on contemporary and historical art issues.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I am knowledgeable about different art periods and movements, such as Impressionism and Modernism.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I collaborate with other artists or participate in community art projects.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I understand and utilize digital photography and editing techniques to document and enhance my artwork.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I am familiar with various printmaking techniques and can produce prints (e.g., lithography, etching, screen printing).",
+        "profession": "Artist"
+    },
+    {
+        "question": "I often experiment with unconventional materials and techniques to create unique pieces of art.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I have experience in conducting art workshops or classes, sharing my skills and knowledge with others.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I have knowledge of 3D modeling and animation tools to create digital artworks.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I frequently use creative problem-solving skills to overcome artistic challenges.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I consistently seek new inspiration from a broad range of cultural, historical, and interdisciplinary sources.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I understand the principles of light and shadow and how they affect the perception of depth and form in my artwork.",
+        "profession": "Artist"
+    },
+    {
+        "question": "I can explain the importance and the steps of hand hygiene in clinical settings.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I feel confident in my ability to handle the emotional aspects of patient care, including delivering bad news.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I understand the ethical considerations involved in patient care.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I am skilled at using electronic health record systems to document and review patient information.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I can effectively handle patient consultations via telemedicine platforms.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I can identify and manage the symptoms of common chronic illnesses such as diabetes and hypertension.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I can read medical journals or publications to stay updated with the latest medical research.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I am comfortable discussing treatment options and prognoses with patients.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I feel confident in my ability to explain complex medical conditions to patients in an understandable way.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I employ advanced diagnostic skills to accurately identify rare or complex medical conditions.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I am knowledgeable about public health issues and contribute to community health initiatives.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I have a strong understanding of genetics and personalized medicine approaches.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I have the ability to interpret results from various diagnostic tools like MRIs and blood tests.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I advocate for patient rights and work to ensure that all patients receive equitable treatment.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I maintain professional relationships with patients, building trust and ensuring ongoing care continuity.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I actively contribute to medical literature through writing articles, case studies, or research papers.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I have experience in conducting clinical research to advance medical knowledge and improve patient care.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I am knowledgeable about the latest pharmaceutical products and their appropriate applications.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I am confident in my ability to diagnose common medical conditions.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I engage in health promotion and disease prevention activities within the community.",
+        "profession": "Doctor"
+    },
+    {
+        "question": "I am familiar with front-end technologies and can create responsive and user-friendly interfaces.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "Programster",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I can design and implement efficient network protocols for software applications.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I have used artificial intelligence techniques to create innovative software solutions.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I have experience with software development methodologies like Agile or Scrum.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I am capable of integrating APIs and external services into my projects.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I write code on a daily basis.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I keep up with the latest trends and advancements in technology to enhance my coding skills.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I can architect and develop scalable systems that handle high volumes of traffic.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I have implemented internationalization (i18n) and localization (l10n) in software projects to reach global audiences.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I am proficient in developing real-time systems and applications, such as video games or financial trading systems.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I keep up to date with the latest programming languages and technologies.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I have experience with cloud platforms like AWS, Azure, or Google Cloud.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I participate in coding competitions or hackathons.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I use unit testing and integration testing to ensure the functionality and reliability of my code.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I have developed or published my own software applications.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I am proficient in using data structures and algorithms to optimize the performance of software applications.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I regularly refactor code to improve its efficiency and readability.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I have mentored or taught others programming skills.",
+        "profession": "Programmer"
+    },
+    {
+        "question": "I understand and can implement machine learning algorithms in practical applications.",
+        "profession": "Programmer"
+    }
+]

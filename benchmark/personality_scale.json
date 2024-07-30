@@ -1,0 +1,502 @@
+[
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Am the life of the party."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Feel comfortable around people."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Start conversations."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Talk to a lot of different people at parties."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Don't mind being the center of attention."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Make friends easily."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Take charge."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Know how to captivate people."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Feel at ease with people."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "pos",
+        "content": "Am skilled in handling social situations."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Don't talk a lot."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Keep in the background."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Have little to say."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Don't like to draw attention to myself."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Am quiet around strangers."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Find it difficult to approach others."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Often feel uncomfortable around others."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Bottle up my feelings."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Am a very private person."
+    },
+    {
+        "factor": "Extraversion",
+        "polarity": "neg",
+        "content": "Wait for others to lead the way."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Am interested in people."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Sympathize with others' feelings."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Have a soft heart."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Take time out for others."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Feel others' emotions."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Make people feel at ease."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Inquire about others' well-being."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Know how to comfort others."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Love children."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Am on good terms with nearly everyone."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Have a good word for everyone."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Show my gratitude."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Think of others first."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "pos",
+        "content": "Love to help others."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "neg",
+        "content": "Insult people."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "neg",
+        "content": "Am not interested in other people's problems."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "neg",
+        "content": "Feel little concern for others."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "neg",
+        "content": "Am not really interested in others."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "neg",
+        "content": "Am hard to get to know."
+    },
+    {
+        "factor": "Agreeableness",
+        "polarity": "neg",
+        "content": "Am indifferent to the feelings of others."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Am always prepared."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Pay attention to details."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Get chores done right away."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Like order."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Follow a schedule."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Am exacting in my work."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Do things according to a plan."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Continue until everything is perfect."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Make plans and stick to them."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Love order and regularity."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "pos",
+        "content": "Like to tidy up."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "neg",
+        "content": "Leave my belongings around."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "neg",
+        "content": "Make a mess of things."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "neg",
+        "content": "Often forget to put things back in their proper place."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "neg",
+        "content": "Shirk my duties."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "neg",
+        "content": "Neglect my duties."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "neg",
+        "content": "Waste my time."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "neg",
+        "content": "Do things in a half-way manner."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "neg",
+        "content": "Find it difficult to get down to work."
+    },
+    {
+        "factor": "Conscientiousness",
+        "polarity": "neg",
+        "content": "Leave a mess in my room."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "pos",
+        "content": "Am relaxed most of the time."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "pos",
+        "content": "Seldom feel blue."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "pos",
+        "content": "Am not easily bothered by things."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "pos",
+        "content": "Rarely get irritated."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "pos",
+        "content": "Seldom get mad."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Get stressed out easily."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Worry about things."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Am easily disturbed."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Get upset easily."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Change my mood a lot."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Have frequent mood swings."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Get irritated easily."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Often feel blue."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Get angry easily."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Panic easily."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Feel threatened easily."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Get overwhelmed by emotions."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Take offense easily."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Get caught up in my problems."
+    },
+    {
+        "factor": "Neuroticism",
+        "polarity": "neg",
+        "content": "Grumble about things."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Have a rich vocabulary."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Have a vivid imagination."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Have excellent ideas."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Am quick to understand things."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Use difficult words."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Spend time reflecting on things."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Am full of ideas."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Carry the conversation to a higher level."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Catch on to things quickly."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Can handle a lot of information."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Love to think up new ways of doing things."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Love to read challenging material."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "pos",
+        "content": "Am good at many things."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "neg",
+        "content": "Have difficulty understanding abstract ideas."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "neg",
+        "content": "Am not interested in abstract ideas."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "neg",
+        "content": "Do not have a good imagination."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "neg",
+        "content": "Try to avoid complex people."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "neg",
+        "content": "Have difficulty imagining things."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "neg",
+        "content": "Avoid difficult reading material."
+    },
+    {
+        "factor": "Openness",
+        "polarity": "neg",
+        "content": "Will not probe deeply into a subject."
+    }
+]

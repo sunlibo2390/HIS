@@ -1,0 +1,28 @@
+{
+  "Plot_Generation_Single_Personality": {
+    "Instruction": "Design a plot theme where a person with {factor_polarity} (referred to as A) engages in a conversation initiated by another person (referred to as B). The conversation should be able to reflect that in the occasion of {occasion}, the person with {factor_polarity} {desc}. The extreme {factor_polarity} of A can be fully and obviously reflected in the generated dialogue. The plot should be an overview or an outline, not a detailed dialogue. Ensure the plot is realistic and unfolds naturally, within a concise limit of 400 words. Avoid specifying actual conversation utterances. The conversation should be initiated by B."
+  },
+  "Dialogue_Generation_Single_Personality": {
+    "Instruction": "Simulate a realistic and engaging dialogue following the plot abstract, consisting of 18 rounds of alternating conversation, more than 15 words per person, output in the following JSON format. The person with {factor_polarity} is referred to as A, and the other person is referred to as B. The tone should be casual and life-like, reflecting everyday human communication, don't be too polite. The topic should be introduced step by step and do not directly ask questions related to quality. No one's name title or code name is included in the conversation. The conversation should be initiated by B.",
+    "Requirements": {
+      "Plot_Abstract": "{plot}",
+      "JSON_Format": "{json_example}"
+    }
+  },
+  "Plot_Generation_Single_Profession": [
+    {
+      "Instruction": "Design a plot theme where a {profession} (referred to as A) interacts with another individual (referred to as B). The dialogue should revolve around topics relevant to A's profession. Ensure the plot is realistic and unfolds naturally, within a concise limit of 200 words. Avoid specifying actual conversation utterances. The conversation should be initiated by B."
+    },
+    {
+      "Instruction": "Design a plot theme where a {profession} (referred to as A) interacts with a/an {b_profession} (referred to as B). The conversation delves into topics outside A's professional expertise, requiring actions beyond A's specialty. A demonstrates ignorance or incapability in non-professional areas. Ensure the plot is realistic and unfolds naturally, within a concise limit of 200 words. Avoid specifying actual conversation utterances. The conversation should be initiated by B.",
+      "Output_Format": "{json_example}"
+    }
+  ],
+  "Dialogue_Generation_Single_Profession": {
+    "Instruction": "Simulate a realistic and engaging dialogue following the plot abstract, consisting of no less than 20 turns of alternating conversation, and each person speaks no less than 50 words per turn, output in the following JSON format. The {profession}'s code name is A, and the other person's code name is B. The tone should be casual and life-like, reflecting everyday human communication, don't be too polite. The topic should be introduced step by step and do not directly ask questions related to quality. No one's name title or code name is included in the conversation. The conversation should be initiated by B.",
+    "Requirements": {
+      "Plot_Abstract": "{plot}",
+      "JSON_Format": "{json_example}"
+    }
+  }
+}

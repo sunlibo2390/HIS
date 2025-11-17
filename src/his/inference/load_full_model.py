@@ -1,10 +1,17 @@
 # Load model directly
-from transformers import LlamaTokenizer, LlamaForCausalLM, GenerationConfig, PreTrainedModel
-import torch
-from moe_lora_llama.moe_lora import MLoraModelForCausalLM, MLoraConfig
-import fire
 import os
+
+import fire
+import torch
 from peft import PeftModel
+from transformers import (
+    GenerationConfig,
+    LlamaForCausalLM,
+    LlamaTokenizer,
+    PreTrainedModel,
+)
+
+from his.models.moe_lora import MLoraConfig, MLoraModelForCausalLM
 
 os.environ['http_proxy'] = 'http://127.0.0.1:7890'
 os.environ['https_proxy'] = 'http://127.0.0.1:7890'

@@ -1,18 +1,22 @@
-from transformers import LlamaTokenizer, LlamaForCausalLM, GenerationConfig
-from moe_lora_llama.moe_lora import MLoraModelForCausalLM, MLoraConfig
-from moe_lora_llama.custom_dataset import encode_adapter_name
-import torch
-import fire
-import os
-import json
-from peft import PeftModel
 import itertools
-from prompts import *
+import json
+import os
 import re
+
+import fire
+import torch
 from tqdm import tqdm, trange
-from gpt import gpt_dialog_completion, gpt_api
-from scale_eval_in_dialog import encode_active_adapters, load_model, encode_all_adapters
-from tqdm import tqdm, trange
+from transformers import GenerationConfig, LlamaForCausalLM, LlamaTokenizer
+
+from his.data.dataset import encode_adapter_name
+from his.inference.prompts import *
+from his.models.moe_lora import MLoraConfig, MLoraModelForCausalLM
+from his.utils.gpt import gpt_api, gpt_dialog_completion
+from his.evaluation.scale_eval import (
+    encode_active_adapters,
+    encode_all_adapters,
+    load_model,
+)
 
 
 os.environ['http_proxy'] = 'http://127.0.0.1:7890'
@@ -250,4 +254,3 @@ for idx in tqdm(target_idx_list, total=len(target_idx_list)):
         print("Dialog for GPT\n",gpt_dialog)
     with open(save_path, "w") as f:
         json.dump(identity_situation_result, f)
-

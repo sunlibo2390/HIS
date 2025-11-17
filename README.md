@@ -16,8 +16,8 @@ HIS is the official implementation of **Identity-Driven Hierarchical Role-Playin
 
 | Path | Description |
 | --- | --- |
-| `code/llama2_finetune/` | Training entrypoints, persona-aware dataset loader, custom MLora implementation. |
-| `code/llama2_inference/` | Inference demos, evaluation scripts, and the inference copy of MLora. |
+| `src/his/` | Python package containing training (`his.training`), inference (`his.inference`), data utilities, and the shared MLora implementation. Install via `pip install -e .` or `PYTHONPATH=src`. |
+| `scripts/` | *(optional)* Placeholder for wrapper scripts (not included yet). Launch modules directly via `python -m his.…`. |
 | `datasets/identity_data/` | Persona dialogs (JSON). Each persona has `train.json` / `test.json`. |
 | `benchmark/` | Prompts for personality scales, profession scales, and open situations. |
 | `scales/`, `human_evaluation/` | Output folders for automatic scale runs + manual review templates. |
@@ -34,9 +34,14 @@ HIS is the official implementation of **Identity-Driven Hierarchical Role-Playin
    pip install -r requirements.txt
    ```
    Includes Transformers 4.57.1, PEFT 0.18.0, bitsandbytes 0.48.2, DeepSpeed 0.18.2, PyTorch 2.9.1 (CUDA 12.8 wheels), etc.
-3. **Hardware**: assumes CUDA 12.x GPUs.
-4. **Base model**: download Llama‑2‑7B-chat (Meta license). Update `base_model` path in scripts if it lives elsewhere.
-5. **API keys**: `code/llama2_inference/gpt.py` expects `OPENAI_API_KEY`.
+3. **Editable install** (recommended for cleaner imports):
+   ```bash
+   pip install -e .
+   ```
+   or add `PYTHONPATH=src` when running ad-hoc commands.
+4. **Hardware**: assumes CUDA 12.x GPUs.
+5. **Base model**: download Llama‑2‑7B-chat (Meta license). Update `base_model` path in scripts if it lives elsewhere.
+6. **API keys**: `his.utils.gpt` expects `OPENAI_API_KEY`.
 
 ---
 
@@ -54,7 +59,7 @@ Each example in `datasets/identity_data/*/*.json` follows:
 }
 ```
 
-Rules enforced by `custom_dataset.py`:
+Rules enforced by `his.data.dataset`:
 - Maximum six adapters per sample.
 - **Personality traits**: five factors (AGR/CON/EXT/NEU/OPE), each with `_high` / `_low`. An example may activate at most one polarity per factor.
 - **Professions**: `Doctor`, `Artist`, `Programmer`; choose zero or one.
@@ -65,7 +70,7 @@ Rules enforced by `custom_dataset.py`:
 
 ## Training (MOE LoRA Fine-Tuning)
 
-Entry script: `code/llama2_finetune/moe_lora_finetune.py`. 
+Entry module: `his.training.train_moe_lora`. Invoke it with `python -m his.training.train_moe_lora` (or add `PYTHONPATH=src` and call the file directly). It wraps Hugging Face `Trainer` and inserts MLora adapters into `['q_proj','k_proj','v_proj','o_proj']`.
 
 ### Adapter Configuration
 
@@ -81,8 +86,7 @@ Entry script: `code/llama2_finetune/moe_lora_finetune.py`.
 Single GPU:
 
 ```bash
-PYTHONPATH=code \
-python code/llama2_finetune/moe_lora_finetune.py \
+python -m his.training.train_moe_lora \
   --num_epochs 1 \
   --batch_size 4 \
   --micro_batch_size 2 \
@@ -95,9 +99,8 @@ Multi GPU (4 cards with `torchrun` – device assignment handled via `LOCAL_RANK
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
-PYTHONPATH=code \
 torchrun --nproc_per_node=4 --master_port=29501 \
-  code/llama2_finetune/moe_lora_finetune.py \
+  -m his.training.train_moe_lora \
   --num_epochs 1 \
   --batch_size 8 \
   --micro_batch_size 2 \
@@ -115,31 +118,34 @@ Notes:
 
 ## Inference
 
-`code/llama2_inference/inference.py` 
+`his.inference.inference_cli` loads the base model in 8-bit, stitches in saved adapters, and exposes a Fire CLI. Paths can be passed via CLI flags or environment variables (`HIS_BASE_MODEL`, `HIS_LORA_WEIGHTS`, `HIS_SCALE_PATH`, `HIS_SCALES_DIR`).
 
-- Specify the adapter checkpoint via `lora_weights` in the script (default points to `models/1116_artist/checkpoint-5`).
+- Specify the adapter checkpoint via `--lora_weights` (defaults to `models/1116_artist`). Pass a checkpoint such as `models/test_pkg_cuda0123` to load your latest finetune.
 - Provide adapters to activate via `--active_adapter_names`. The script sanitizes the list: duplicates removed, opposing polarities trimmed, and professions restricted to zero/one selection. If you request nothing, it falls back to `["Artist"]`.
+- Use `--cuda_devices` to pin inference to specific GPUs (e.g., `--cuda_devices 0`). Otherwise the driver respects `CUDA_VISIBLE_DEVICES`.
 
 Example: **single adapter** (profession only):
 
 ```bash
-PYTHONPATH=code \
-python code/llama2_inference/inference.py \
+python -m his.inference.inference_cli \
   --mode multi \
   --max_turns 1 \
   --user_prompt "What's your profession?" \
-  --active_adapter_names '["Artist"]'
+  --active_adapter_names '["Artist"]' \
+  --lora_weights models/test_pkg_cuda0123 \
+  --cuda_devices 0
 ```
 
 Example: **multiple adapters** (profession + two traits):
 
 ```bash
-PYTHONPATH=code \
-python code/llama2_inference/inference.py \
+python -m his.inference.inference_cli \
   --mode multi \
   --max_turns 1 \
   --user_prompt "Would you like to hang out this weekend?" \
-  --active_adapter_names '["Doctor","EXT_low","AGR_high"]'
+  --active_adapter_names '["Doctor","EXT_low","AGR_high"]' \
+  --lora_weights models/test_pkg_cuda0123 \
+  --cuda_devices 0
 ```
 
 
@@ -147,18 +153,18 @@ python code/llama2_inference/inference.py \
 
 ## Evaluation
 
-Three primary evaluation utilities live under `code/llama2_inference/`:
+Three primary evaluation utilities now live under `his.evaluation`:
 
-1. **Scale evaluations (`scale_eval_in_dialog.py`)**  
+1. **Scale evaluations (`his.evaluation.scale_eval`)**  
    - Uses BF-marker-100 (20 prompts/trait) and the custom profession scale (20 prompts/profession).  
    - Implements an interactive questioning loop: ChatGPT asks the finetuned agent follow-up questions, then scores the response via self-consistency voting.
 
-2. **Open-ended situational tests (`situation_dialog.py`)**  
+2. **Open-ended situational tests (`his.evaluation.situation_dialog`)**  
    - Eight scenarios mixing personalities and professions.  
    - Each dialogue runs for up to four turns; GPT judges detect which identities manifested.  
    - Experiments cover 971 identity combinations, mirroring the paper’s Section 4 results.
 
-3. **Human/GPT evaluation helpers (`gpt.py`, `gpt_interviewer.py`)**  
+3. **Human/GPT evaluation helpers (`his.utils.gpt`, `his.evaluation.gpt_interviewer`)**  
    - Provide anonymized and reversed dialogues for human annotation or GPT-based judging.  
    - Require `OPENAI_API_KEY`; set `OPENAI_CHAT_MODEL`, `OPENAI_MAX_TOKENS` as desired.
 

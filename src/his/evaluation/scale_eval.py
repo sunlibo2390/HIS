@@ -1,17 +1,18 @@
 # Load model directly
-from transformers import LlamaTokenizer, LlamaForCausalLM, GenerationConfig
-from moe_lora_llama.moe_lora import MLoraModelForCausalLM, MLoraConfig
-from moe_lora_llama.custom_dataset import encode_adapter_name
-import torch
-import fire
-import os
-import json
-from peft import PeftModel
 import itertools
-from prompts import *
+import json
+import os
 import re
+
+import fire
+import torch
 from tqdm import tqdm, trange
-from gpt import gpt_dialog_completion, gpt_api
+from transformers import GenerationConfig, LlamaForCausalLM, LlamaTokenizer
+
+from his.data.dataset import encode_adapter_name
+from his.inference.prompts import *
+from his.models.moe_lora import MLoraConfig, MLoraModelForCausalLM
+from his.utils.gpt import gpt_api, gpt_dialog_completion
 # from vllm import ModelRegistry
 # ModelRegistry.register_model("MLoraModelForCausalLM", MLoraModelForCausalLM)
 # from vllm import LLM, SamplingParams

@@ -1,6 +1,14 @@
-# HIS
+# HIS: Identity-Driven Hierarchical Role-Playing Agents
 
-This repository contains everything needed to fine-tune a Llama‑2‑7B chat model with a mixture-of-experts LoRA adapter, evaluate it on personality scales, and run interactive inference demos. The project couples a lightweight data pipeline with customized PEFT/LoRA modules that support multiple persona adapters per layer and provides tooling for both automatic and human evaluations.
+HIS is the official implementation of **Identity-Driven Hierarchical Role-Playing Agents** (Sun et al., 2024) – [arXiv:2407.19412](https://arxiv.org/abs/2407.19412). It fine-tunes Llama‑2‑7B chat with a Mixture-of-Experts LoRA architecture that isolates and explicitly controls Big Five personality traits (with high/low polarities) and profession identities.
+
+## Highlights
+
+- **Hierarchical Identity Role-Playing Framework (HIRPF)**: dedicated LoRA experts per identity, intra-level isolation (per-identity adapters) + inter-level alternation (personality vs. profession blocks), and explicit control via hard masks and gated routers.
+- **Identity dialogue dataset**: 20,685 multi-turn conversations (avg. 9.5 turns, 220 tokens) annotated with up to six active identities (≤1 polarity per trait, ≤1 profession, both optional). Dialogues cover single traits, single professions, and trait–profession pairs.
+- **Evaluation suite**: interactive Big Five scales (BF-marker-100), a custom profession scale (20 prompts/occupation), and open-ended situational tests (8 scripted scenarios, 971 identity combinations).
+- **Empirical results**: HIRPF beats prompt-only baselines (Llama2-7B-chat, Llama3-8B-Instruct) on trait/profession fidelity and competes with ChatGPT, especially for negative traits like low Agreeableness. Accuracy drops gracefully as more identities are combined.
+- **Applications**: scripted questionnaires and debates where identity combinations express distinct attitudes—useful for social simulation, policy prototyping, tutoring, and therapeutic studies.
 
 ---
 
@@ -8,125 +16,69 @@ This repository contains everything needed to fine-tune a Llama‑2‑7B chat mo
 
 | Path | Description |
 | --- | --- |
-| `code/llama2_finetune/` | Training entrypoints, the persona-aware dataset loader, and the customized `MLora` PEFT implementation. |
-| `code/llama2_inference/` | Inference & evaluation scripts (dialogue, scale-based QA, GPT-assisted scoring) plus the inference copy of `MLora`. |
-| `datasets/identity_data/` | Persona training data (JSON). Each persona (Artist, Doctor, etc.) gets its own folder with `train.json` / `test.json`. |
-| `models/` | Saved LoRA checkpoints (e.g., `models/1116_artist`), along with checkpoints produced by fresh experiments (e.g., `models/test_quick`). |
-| `benchmark/` | JSON benchmarks covering situational tests, personality scales, and profession scales. |
-| `human_evaluation/` | Samples and CSV templates used during manual evaluation rounds. |
-| `scales/` | Default folders where dialogue/scale inference results are persisted. |
-| `prompts/`, `data/` | Additional prompt templates and raw data referenced during experimentation. |
+| `code/llama2_finetune/` | Training entrypoints, persona-aware dataset loader, custom MLora implementation. |
+| `code/llama2_inference/` | Inference demos, evaluation scripts, and the inference copy of MLora. |
+| `datasets/identity_data/` | Persona dialogs (JSON). Each persona has `train.json` / `test.json`. |
+| `benchmark/` | Prompts for personality scales, profession scales, and open situations. |
+| `scales/`, `human_evaluation/` | Output folders for automatic scale runs + manual review templates. |
+| `models/` | Checkpoints produced by fine-tuning (ignored in Git – store locally). |
+| `prompts/`, `data/` | Auxiliary prompt templates and raw assets. |
 
 ---
 
 ## Environment Setup
 
-1. **Python**: All scripts were tested with Python 3.10.19.
+1. **Python**: Tested with Python 3.10.19.
 2. **Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
-   The requirements file pins all core packages (Transformers 4.57.1, PEFT 0.18.0, bitsandbytes 0.48.2, DeepSpeed 0.18.2, etc.) along with CUDA 12.8 wheels for PyTorch 2.9.1.
-3. **GPU / CUDA**: Training and inference both assume access to GPUs with CUDA 12.x runtimes. Most scripts default to `CUDA_VISIBLE_DEVICES="0,1,2,3"` but can be run on fewer GPUs by overriding the environment variable before launching.
-4. **Base model**: The scripts expect the Llama‑2‑7B‑chat weights to exist locally. Adjust `base_model` inside `moe_lora_finetune.py` / `inference.py` if your checkpoint lives elsewhere.
-5. **Network / proxies**: `inference.py` defaults to HTTP proxy settings (`127.0.0.1:7890`) to reach external APIs. Remove or edit those environment variables if you do not rely on a proxy.
+   Includes Transformers 4.57.1, PEFT 0.18.0, bitsandbytes 0.48.2, DeepSpeed 0.18.2, PyTorch 2.9.1 (CUDA 12.8 wheels), etc.
+3. **Hardware**: assumes CUDA 12.x GPUs.
+4. **Base model**: download Llama‑2‑7B-chat (Meta license). Update `base_model` path in scripts if it lives elsewhere.
+5. **API keys**: `code/llama2_inference/gpt.py` expects `OPENAI_API_KEY`.
 
 ---
 
 ## Data Preparation
 
-### Persona Dialog Data
-
-Each persona directory under `datasets/identity_data/` contains two JSON files with the following schema:
+Each example in `datasets/identity_data/*/*.json` follows:
 
 ```json
-[
-  {
-    "dialog": [
-      {"role": "user", "content": "Prompt text ..."},
-      {"role": "assistant", "content": "Response ..."}
-    ],
-    "active_adapters": ["Artist", "AGR_high", "OPE_low"]
-  }
-]
+{
+  "dialog": [
+    {"role": "user", "content": "Prompt text ..."},
+    {"role": "assistant", "content": "Response ..."}
+  ],
+  "active_adapters": ["Artist", "AGR_high", "OPE_low"]
+}
 ```
 
-- `active_adapters` is a list of persona / trait adapters to activate during training.
-- Adapters come in two families: five personality factors (AGR/CON/EXT/NEU/OPE, each with `_high`/`_low` polarities) plus three professions (`Doctor`, `Artist`, `Programmer`). At most one polarity per factor and one profession may be active at a time (maximum of six adapters). The loader enforces these constraints, augments each record with the `[INST] ... [/INST]` format, and pads with `[-1, -1]` when fewer than six adapters are provided.
+Rules enforced by `custom_dataset.py`:
+- Maximum six adapters per sample.
+- **Personality traits**: five factors (AGR/CON/EXT/NEU/OPE), each with `_high` / `_low`. An example may activate at most one polarity per factor.
+- **Professions**: `Doctor`, `Artist`, `Programmer`; choose zero or one.
+- Missing slots are padded with `[-1, -1]`. Invalid names raise an error.
 
-### Evaluation Assets
-
-- `benchmark/personality_scale.json`, `profession_scale.json`, `open_situational_test.json`: prompts for automatic benchmarking.
-- `human_evaluation/*.csv`: templates for manual scoring rounds.
-- `scales/agent_dialog_finetune+factor_prompt/`: default destination for dialogue transcripts produced during evaluation.
 
 ---
 
-## Training
+## Training (MOE LoRA Fine-Tuning)
 
-`moe_lora_finetune.py` is the main training entrypoint. It uses Hugging Face `Trainer` with a customized `MLoraModelForCausalLM` and a `CustomDataCollator` that threads active adapter indices through every batch. The script now exposes ergonomic helpers to:
+Entry script: `code/llama2_finetune/moe_lora_finetune.py`. 
 
-- Set CUDA devices via `--cuda_devices`.
-- Limit the number of samples processed via `--limit_train_samples` / `--limit_eval_samples` (handy for smoke tests).
-- Override LoRA adapter shapes or names directly from the CLI.
+### Adapter Configuration
 
-### MOE Adapter Modes
+- `MLoraConfig.adapter_names` lists the entire expert pool. By default it includes all 10 trait polarities and 3 professions. You can restrict it to a subset by editing the script or passing a serialized list (custom entrypoint).
+- `insert_mode` governs how experts are reused:
+  - **flat** (default): collapse all adapters into one global pool.
+  - **layered**: supply a list of groups (e.g., `[trait_group, profession_group]`) reused at every decoder layer.
+  - **alternate**: supply a list of groups (traits vs. professions) that rotate across layers.
+- The loader ensures every adapter mentioned in `active_adapters` exists in the config. Even if the config contains both `*_high` and `*_low`, a single training record cannot activate both polarities of the same trait and cannot select multiple professions.
 
-Adapters fall into two families:
-- **Personality factors**: the five Big Five traits (`AGR/CON/EXT/NEU/OPE`), each with `_high` and `_low` polarities (10 adapters total).
-- **Professions**: `Doctor`, `Artist`, `Programmer`.
+### Launch Examples
 
-For any training or inference sample you may activate up to six adapters, but they must respect these constraints:
-- Within a single factor choose **at most one polarity** (`AGR_high` xor `AGR_low`, etc.).
-- Choose **zero or one profession** (three options, but picking none is also valid).
-- It is legal to skip both personality and profession adapters (the sample falls back to the base persona).
-
-Once you decide which adapters to activate, arrange them with one of three `MLoraConfig.insert_mode` options:
-
-- **flat** (default): all layers share the same expert pool. Useful when every adapter should be globally available.
-- **layered**: provide an explicit list of adapter groups; each group is re-used for every layer, but gating happens at the group level.
-- **alternate**: rotate a list of adapter groups across decoder layers (layer 0 uses group 0, layer 1 uses group 1, etc.), enabling interleaved expert placement without duplicating state.
-
-Examples aligned with the three `insert_mode` definitions:
-
-```python
-# flat: collapse both families into one expert pool shared by every layer.
-adapter_names = [
-    "AGR_high","AGR_low","CON_high","CON_low","EXT_high","EXT_low",
-    "NEU_high","NEU_low","OPE_high","OPE_low",
-    "Doctor","Artist","Programmer",
-]
-
-# layered: keep two persistent groups (traits / professions) that repeat on each layer.
-adapter_names = [
-    ["AGR_high","AGR_low","CON_high","CON_low","EXT_high","EXT_low","NEU_high","NEU_low","OPE_high","OPE_low"],
-    ["Doctor","Artist","Programmer"],
-]
-insert_mode = "layered"
-
-# alternate: rotate groups across decoder layers (even layers see traits, odd layers see professions).
-adapter_names = [
-    ["AGR_high","AGR_low","CON_high","CON_low","EXT_high","EXT_low","NEU_high","NEU_low","OPE_high","OPE_low"],
-    ["Doctor","Artist","Programmer"],
-]
-insert_mode = "alternate"
-```
-
-Switch modes by editing the config inside the finetune/inference scripts or by passing a serialized adapter list in a custom entrypoint.
-
-When launching training you can override `adapter_names` (either by editing the script or by supplying a serialized list in a custom entrypoint) to limit which experts are created. The loader validates that every `active_adapters` entry in your dataset exists in the configured list; if a sample references a missing adapter it will raise. Remember that although the config may contain both `*_high` and `*_low`, any single training example must pick at most one polarity per trait plus zero or one profession.
-
-During inference you must pass the adapters you want to activate via `--active_adapter_names`. The script sanitizes the list so that mutually exclusive pairs (`AGR_high` vs `AGR_low`, etc.) never co-activate and professions remain a “pick one or none” choice, mirroring the training constraints.
-
-Key arguments (all configurable via Fire):
-
-- `base_model`: path to the base Llama checkpoint.
-- `data_dir`: dataset folder (expects `train.json` / `test.json`).
-- `output_dir`: where LoRA checkpoints and logs are written.
-- `batch_size` / `micro_batch_size`: global and per-device batch sizes.
-- `num_epochs`, `learning_rate`, etc.
-
-Single-GPU example (quick sanity run used during verification):
+Single GPU:
 
 ```bash
 PYTHONPATH=code \
@@ -139,7 +91,7 @@ python code/llama2_finetune/moe_lora_finetune.py \
   --output_dir models/test_quick
 ```
 
-Multi-GPU example (4 GPUs, ranks assigned automatically):
+Multi GPU (4 cards with `torchrun` – device assignment handled via `LOCAL_RANK`):
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
@@ -155,84 +107,74 @@ torchrun --nproc_per_node=4 --master_port=29501 \
 ```
 
 Notes:
-- The script currently limits training data to 10 examples and validation to 2 by default to keep dev runs fast (`train_data = train_data.select(...)`).
-- LoRA adapters are inserted into `['q_proj','k_proj','v_proj','o_proj']` modules and share the adapter layout defined in `MLoraConfig`.
-- Outputs include `adapter_model.bin`, `adapter_config.json`, and intermediate checkpoints (e.g., `checkpoint-3`).
+- Default dev-mode limits: first 10 training and 2 eval samples unless overridden.
+- `--cuda_devices` is optional; setting `CUDA_VISIBLE_DEVICES` before launching is sufficient.
+- Checkpoints contain `adapter_model.bin` and `adapter_config.json`. Full base-model weights remain untouched.
 
 ---
 
 ## Inference
 
-`code/llama2_inference/inference.py` loads the base model in 8-bit, stitches in a saved adapter, and exposes a Fire CLI for single-turn or multi-turn demos. Notable features:
+`code/llama2_inference/inference.py` 
 
-- Automatically sets tokenizer padding to the EOS token and enforces left padding for batched inference.
-- Loads adapters directly via `MLoraModelForCausalLM` + `state_dict` (no PEFT registry required).
-- Accepts a list of active adapters (defaults to `["Artist"]`).
-- Supports `mode="single"` or `mode="multi"`, `max_turns`, and `user_prompt` arguments.
+- Specify the adapter checkpoint via `lora_weights` in the script (default points to `models/1116_artist/checkpoint-5`).
+- Provide adapters to activate via `--active_adapter_names`. The script sanitizes the list: duplicates removed, opposing polarities trimmed, and professions restricted to zero/one selection. If you request nothing, it falls back to `["Artist"]`.
 
-Examples:
+Example: **single adapter** (profession only):
 
-- Activate a single adapter (profession only):
-  ```bash
-  PYTHONPATH=code \
-  python code/llama2_inference/inference.py \
-    --mode multi \
-    --max_turns 1 \
-    --user_prompt "你的职业是什么？" \
-    --active_adapter_names '["Artist"]'
-  ```
+```bash
+PYTHONPATH=code \
+python code/llama2_inference/inference.py \
+  --mode multi \
+  --max_turns 1 \
+  --user_prompt "What's your profession?" \
+  --active_adapter_names '["Artist"]'
+```
 
-- Activate multiple adapters (profession + one trait polarity):
-  ```bash
-  PYTHONPATH=code \
-  python code/llama2_inference/inference.py \
-    --mode multi \
-    --max_turns 1 \
-    --user_prompt "请介绍一下你的性格？" \
-    --active_adapter_names '["Doctor","EXT_low","AGR_high"]'
-  ```
+Example: **multiple adapters** (profession + two traits):
 
-The script prints both the prompt and the generated reply. Additional utilities in the same folder provide:
+```bash
+PYTHONPATH=code \
+python code/llama2_inference/inference.py \
+  --mode multi \
+  --max_turns 1 \
+  --user_prompt "Would you like to hang out this weekend?" \
+  --active_adapter_names '["Doctor","EXT_low","AGR_high"]'
+```
 
-- `scale_eval_in_dialog.py`: run benchmark scales with persona prompts.
-- `situation_dialog.py` / `gpt_interviewer.py`: scripted interviews, optionally backed by OpenAI via `gpt.py` (requires API keys).
 
 ---
 
-## Evaluation & Utilities
+## Evaluation
 
-- **Scale evaluation**: `scale_eval_in_dialog.py` iterates through `benchmark/personality_scale.json`, constructs system prompts, and logs outputs to `scales/*`.
-- **Situational dialogues**: `situation_dialog.py` uses scenario-specific prompts from `benchmark/open_situational_test.json`.
-- **Human evaluation**: exported CSVs in `human_evaluation` can be filled manually and compared to automatic results.
-- **GPT helpers**: `gpt.py` and `gpt_interviewer.py` call OpenAI endpoints for cross-model comparisons (set `OPENAI_API_KEY` before usage).
+Three primary evaluation utilities live under `code/llama2_inference/`:
 
----
+1. **Scale evaluations (`scale_eval_in_dialog.py`)**  
+   - Uses BF-marker-100 (20 prompts/trait) and the custom profession scale (20 prompts/profession).  
+   - Implements an interactive questioning loop: ChatGPT asks the finetuned agent follow-up questions, then scores the response via self-consistency voting.
 
-## Testing & Verification
+2. **Open-ended situational tests (`situation_dialog.py`)**  
+   - Eight scenarios mixing personalities and professions.  
+   - Each dialogue runs for up to four turns; GPT judges detect which identities manifested.  
+   - Experiments cover 971 identity combinations, mirroring the paper’s Section 4 results.
 
-The following commands were executed end-to-end on this codebase:
+3. **Human/GPT evaluation helpers (`gpt.py`, `gpt_interviewer.py`)**  
+   - Provide anonymized and reversed dialogues for human annotation or GPT-based judging.  
+   - Require `OPENAI_API_KEY`; set `OPENAI_CHAT_MODEL`, `OPENAI_MAX_TOKENS` as desired.
 
-1. **Quick training sanity check** (1 epoch, reduced batch size) to ensure the trainer, dataset, and MLora modules work together without runtime errors:
-   ```bash
-   PYTHONPATH=code python code/llama2_finetune/moe_lora_finetune.py \
-     --num_epochs 1 --batch_size 4 --micro_batch_size 2 \
-     --output_dir models/test_quick
-   ```
-   This produced `models/test_quick/adapter_model.bin` and `checkpoint-3`.
-
-2. **Inference smoke test** using the freshly verified adapter pipeline:
-   ```bash
-   PYTHONPATH=code python code/llama2_inference/inference.py
-   ```
-   The script successfully loaded `/models/1116_artist/checkpoint-5`, injected the adapters, and generated a coherent response to “你的职业是什么？”.
-
-Both runs validate that the custom data collator, MLora wrappers, and adapter-loading logic are functional on the current dependency stack.
+Scale results and situational transcripts are saved under `scales/` by default. Manual evaluation templates live in `human_evaluation/`.
 
 ---
 
-## Troubleshooting & Optimization Tips
+## Citation
 
-- **bitsandbytes warnings**: `load_in_8bit` is currently deprecated upstream. Consider migrating to `BitsAndBytesConfig` if you upgrade Transformers.
-- **Active adapters**: Ensure each dataset example lists at least one valid adapter name. Missing entries trigger `KeyError: 'active_adapters'`.
-- **Tokenizer padding**: Leaving `pad_token_id` unset causes generation warnings. The inference script now forces left padding with EOS, but custom scripts should set it explicitly.
-- **GPU memory**: While LoRA greatly reduces memory usage, initial model loading can still require >20 GB even in 8‑bit. Disable unused GPUs by adjusting `CUDA_VISIBLE_DEVICES`.
+If you use HIS or HIRPF in your work, please cite:
+
+```
+@article{sun2024identity,
+  title={Identity-driven hierarchical role-playing agents},
+  author={Sun, Libo and Wang, Siyuan and Huang, Xuanjing and Wei, Zhongyu},
+  journal={arXiv preprint arXiv:2407.19412},
+  year={2024}
+}
+```

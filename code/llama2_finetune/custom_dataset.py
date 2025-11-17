@@ -6,6 +6,7 @@ import numpy as np
 import copy
 import datasets
 import itertools
+import os
 from transformers import DataCollatorWithPadding, DataCollatorForSeq2Seq
 
 B_INST, E_INST = "[INST]", "[/INST]"
@@ -103,6 +104,7 @@ def encode_adapter_name(config, active_adapter_name):
         for j, name in enumerate(layer_names):
             if name == active_adapter_name:
                 return [i, j]
+    return [-1, -1]
             
 factor_dict = {
     "AGR":"Agreeableness",
@@ -112,6 +114,28 @@ factor_dict = {
     "NEU":"Neuroticism",
     "OPE":"Openness",
 }
+
+PERSONALITY_FACTORS = {"AGR", "CON", "EXT", "NEU", "OPE"}
+PROFESSIONS = {"Doctor", "Artist", "Programmer"}
+
+
+def sanitize_active_adapters(adapter_list):
+    sanitized = []
+    seen_factors = set()
+    profession_added = False
+    for name in adapter_list:
+        if name in PROFESSIONS:
+            if not profession_added:
+                sanitized.append(name)
+                profession_added = True
+        elif "_" in name:
+            factor = name.split("_")[0]
+            if factor in PERSONALITY_FACTORS and factor not in seen_factors:
+                sanitized.append(name)
+                seen_factors.add(factor)
+        if len(sanitized) == 6:
+            break
+    return sanitized
 
 def build_system_prompt(adapter_names):
     active_factor_polar = {}
@@ -145,18 +169,20 @@ def build_system_prompt(adapter_names):
     return start_prompt
 
 def tokenize_moe_dialog(dialog, tokenizer, active_adapters, config):
-    # print(active_adapters)
-    dialog[0]['content'] = f"<<SYS>> {build_system_prompt(active_adapters)} <</SYS>> {dialog[0]['content']}"
+    limited_adapters = sanitize_active_adapters(active_adapters)
+    dialog[0]['content'] = f"<<SYS>> {build_system_prompt(limited_adapters)} <</SYS>> {dialog[0]['content']}"
     prompt_tokens = [tokenizer.encode(f"{tokenizer.bos_token}{B_INST} {(prompt['content']).strip()} {E_INST}", add_special_tokens=False) for prompt in dialog[::2]]
     answer_tokens = [tokenizer.encode(f"{answer['content'].strip()} {tokenizer.eos_token}", add_special_tokens=False) for answer in dialog[1::2]]
     dialog_tokens = list(itertools.chain.from_iterable(zip(prompt_tokens, answer_tokens)))
     #Add labels, convert prompt token to -100 in order to ignore in loss function
     labels_tokens = [len(c)*[-100,] if i % 2 == 0 else c for i,c in enumerate(dialog_tokens)]
+    # breakpoint()
+    # print(f"active_adapters {active_adapters}")
 
     combined_tokens = {
         "input_ids": list(itertools.chain(*(t for t in dialog_tokens))),
         "labels": list(itertools.chain(*(t for t in labels_tokens))),
-        "active_adapters": [encode_adapter_name(config, active_adapter) for active_adapter in active_adapters] + (6-len(active_adapters)) * [[-1,-1]]
+        "active_adapters": [encode_adapter_name(config, active_adapter) for active_adapter in limited_adapters] + (6-len(limited_adapters)) * [[-1,-1]]
     }
     # print(tokenizer.decode(list(itertools.chain(*(t for t in dialog_tokens)))))
     # if len(combined_tokens["active_adapters"]) != 6:
@@ -167,7 +193,18 @@ def tokenize_moe_dialog(dialog, tokenizer, active_adapters, config):
 
 
 def get_moe_dataset(data_dir, tokenizer, split, config):
-    dataset = datasets.load_dataset(data_dir, split=split).shuffle()
+    data_files = {
+        "train": os.path.join(data_dir, "train.json"),
+        "test": os.path.join(data_dir, "test.json"),
+    }
+    if split not in data_files:
+        raise ValueError(f"Unsupported split {split}. Available splits: {list(data_files)}")
+    dataset = datasets.load_dataset(
+        "json",
+        data_files=data_files,
+        field=None,
+        keep_in_memory=True,
+    )[split].shuffle()
     dataset = dataset.map(lambda sample: {
         "dialog": sample["dialog"],
         "active_adapters": sample["active_adapters"],
@@ -208,8 +245,8 @@ class CustomDataCollator(DataCollatorForSeq2Seq):
                     feature["labels"] = np.concatenate([feature["labels"], remainder]).astype(np.int64)
                 else:
                     feature["labels"] = np.concatenate([remainder, feature["labels"]]).astype(np.int64)
-                # print(feature)
                 feature["active_adapters"] = feature["active_adapters"] + (6-len(feature["active_adapters"])) * [[-1, -1]]
+                print(feature)
                 # print(len(feature["active_adapters"]))
         features = self.tokenizer.pad(
             features,

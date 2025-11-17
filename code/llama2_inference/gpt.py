@@ -1,75 +1,77 @@
-from transformers import BertTokenizer, BertModel, AutoTokenizer, AutoModelForMaskedLM
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
-from typing import List
-import openai
 import os
-from openai import OpenAI
-client = OpenAI(api_key='sk-8zJcG6Omb3x8s9ZU1211528aBd754f6c8dCa3c52727d3f77', base_url='https://api.ai-gaochao.cn/v1')
+from typing import Callable, Iterable, List, Optional
 
-# os.environ["OPENAI_API_KEY"] = "123456" #随意设置
-os.environ["OPENAI_API_BASE"] = "https://api.kwwai.top/v1"
-# openai.api_key = os.getenv("OPENAI_API_KEY")
-openai.api_base = os.getenv("OPENAI_API_BASE")
-# openai.api_key = "sk-bWEKuAbZ4ciSadHZD98cAaE4735e4e5fBa5450F2521eAb2e" (2$ left)
-openai.api_key = "sk-NV1QGif1EOwDYtnVEd2fEc8bF63045B1A37a605c901f66Aa"
-def gpt_api(prompt, n=1, temperature=0, max_tokens=128):
-    messages = [{"role": "user", "content": prompt}]
-    feedback_list = client.chat.completions.create(
-        model="gpt-3.5-turbo-1106",
-        messages = messages,
+from openai import OpenAI
+
+DEFAULT_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+DEFAULT_MAX_TOKENS = int(os.getenv("OPENAI_MAX_TOKENS", "128"))
+
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise RuntimeError("OPENAI_API_KEY is not set.")
+
+client = OpenAI(
+    api_key=api_key,
+    base_url=os.getenv("OPENAI_API_BASE") or None,
+)
+
+
+def _run_completion(
+    messages: Iterable[dict],
+    *,
+    temperature: float = 0.0,
+    max_tokens: int = DEFAULT_MAX_TOKENS,
+    model: Optional[str] = None,
+    n: int = 1,
+) -> List[str]:
+    response = client.chat.completions.create(
+        model=model or DEFAULT_MODEL,
+        messages=list(messages),
         temperature=temperature,
         max_tokens=max_tokens,
-        n=n
-    ).choices
-    # print("feedback_list\n",feedback_list)
-    summary_list = [
-        feedback.message.content
-        for feedback in feedback_list
-    ]
-    # print("summary_list\n",summary_list)
-    return summary_list
+        n=n,
+    )
+    return [choice.message.content for choice in response.choices]
 
-def gpt_iteration_api(prompt_list, temperature=0, clean=lambda x:x):
-    messages = []
-    feedback_list = []
-    for i in range(len(prompt_list)):
-        messages.append({"role": "user", "content": prompt_list[i]})
 
-        feedback = client.chat.completions.create(
-            model="gpt-3.5-turbo-1106",
-            messages = messages,
-            temperature=temperature,
-            max_tokens=1024,
-        ).choices[0].message.content
-        feedback = clean(feedback)
-        feedback_list.append(feedback)
-        messages.append(
-            {"role": "assistant", "content": feedback}
-        )
-    return feedback_list
+def gpt_api(prompt: str, n: int = 1, temperature: float = 0.0, max_tokens: int = DEFAULT_MAX_TOKENS) -> List[str]:
+    return _run_completion(
+        [{"role": "user", "content": prompt}],
+        temperature=temperature,
+        max_tokens=max_tokens,
+        n=n,
+    )
 
-def gpt_dialog_completion(dialog, temperature=0, max_tokens=128, model="gpt-3.5-turbo-1106"):
+
+def gpt_iteration_api(
+    prompt_list: List[str],
+    temperature: float = 0.0,
+    clean: Callable[[str], str] = lambda x: x,
+) -> List[str]:
+    messages: List[dict] = []
+    outputs: List[str] = []
+    for prompt in prompt_list:
+        messages.append({"role": "user", "content": prompt})
+        response = _run_completion(messages, temperature=temperature, max_tokens=1024)[0]
+        cleaned = clean(response)
+        outputs.append(cleaned)
+        messages.append({"role": "assistant", "content": cleaned})
+    return outputs
+
+
+def gpt_dialog_completion(
+    dialog: List[dict],
+    temperature: float = 0.0,
+    max_tokens: int = DEFAULT_MAX_TOKENS,
+    model: Optional[str] = None,
+) -> str:
     while True:
         try:
-            feedback_list = client.chat.completions.create(
-                model=model,
-                messages = dialog,
+            return _run_completion(
+                dialog,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                n=1
-            ).choices
-            # print("feedback_list\n",feedback_list)
-            output_list = [
-                feedback.message.content
-                for feedback in feedback_list
-            ]
-            break
-        except:
+                model=model,
+            )[0]
+        except Exception:
             continue
-    return output_list[0]
-
-
-print(gpt_api("hello world!"))

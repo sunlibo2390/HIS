@@ -1,60 +1,126 @@
 import os
+from typing import List, Optional
 import sys
-from typing import List
-os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
-os.environ['http_proxy'] = "http://127.0.0.1:7890"
-os.environ['https_proxy'] = "http://127.0.0.1:7890"
-# os.environ['TORCH_DISTRIBUTED_DEBUG'] = "DETAIL"
 import fire
 import torch
 import transformers
-import deepspeed
-from custom_dataset import get_moe_dataset, CustomDataCollator
-from moe_lora_llama.moe_lora import MLoraModelForCausalLM, MLoraConfig
-"""
-Unused imports:
-import torch.nn as nn
-import bitsandbytes as bnb
-"""
 
-from peft import (
-    LoraConfig,
-    PeftModel,
-    get_peft_model,
-    get_peft_model_state_dict,
-    prepare_model_for_int8_training,
-    set_peft_model_state_dict,
-)
+from custom_dataset import CustomDataCollator, get_moe_dataset
+from moe_lora_llama.moe_lora import MLoraConfig, MLoraModelForCausalLM
+from peft import prepare_model_for_kbit_training, set_peft_model_state_dict
 from transformers import LlamaForCausalLM, LlamaTokenizer
-from accelerate import DistributedDataParallelKwargs, Accelerator
                        
+DEFAULT_ENV = {
+    "CUDA_VISIBLE_DEVICES": "0,1,2,3",
+}
+
+
+def _configure_environment(cuda_devices: Optional[str] = None):
+    """Apply safe defaults without overriding user-provided env values."""
+    for key, value in DEFAULT_ENV.items():
+        os.environ.setdefault(key, value)
+    if cuda_devices:
+        os.environ["CUDA_VISIBLE_DEVICES"] = cuda_devices
+
+
+def _build_tokenizer(base_model: str) -> LlamaTokenizer:
+    tokenizer = LlamaTokenizer.from_pretrained(base_model)
+    tokenizer.pad_token_id = tokenizer.pad_token_id or tokenizer.eos_token_id or 0
+    tokenizer.padding_side = "left"
+    return tokenizer
+
+
+def _build_model(
+    base_model: str,
+    tokenizer: LlamaTokenizer,
+    lora_r: int,
+    lora_alpha: int,
+    lora_dropout: float,
+    lora_target_modules: List[str],
+    adapter_names: Optional[List[List[str]]] = None,
+    use_device_map: bool = True,
+    device_index: Optional[int] = None,
+) -> MLoraModelForCausalLM:
+    if device_index is not None:
+        device_map = {"": device_index}
+    else:
+        device_map = "auto" if use_device_map else None
+    model = LlamaForCausalLM.from_pretrained(
+        base_model,
+        load_in_8bit=True,
+        torch_dtype=torch.float16,
+        device_map=device_map,
+    )
+    config = MLoraConfig(
+        r=lora_r,
+        lora_alpha=lora_alpha,
+        target_modules=lora_target_modules,
+        lora_dropout=lora_dropout,
+        bias="none",
+        task_type="CAUSAL_LM",
+        adapter_names=adapter_names
+        or [
+            [
+                "AGR_high",
+                "AGR_low",
+                "CON_high",
+                "CON_low",
+                "EXT_high",
+                "EXT_low",
+                "NEU_high",
+                "NEU_low",
+                "OPE_high",
+                "OPE_low",
+            ],
+            ["Doctor", "Artist", "Programmer"],
+        ],
+        insert_mode="flat",
+        sparse_adapter=False,
+        token_dim=model.get_input_embeddings().weight.shape[1],
+    )
+    prepared = prepare_model_for_kbit_training(model)
+    return MLoraModelForCausalLM(prepared, config)
+
+
+def _load_datasets(
+    data_dir: str,
+    tokenizer: LlamaTokenizer,
+    config: MLoraConfig,
+    train_limit: Optional[int],
+    val_limit: Optional[int],
+):
+    train_data = get_moe_dataset(data_dir, tokenizer, "train", config)
+    val_data = get_moe_dataset(data_dir, tokenizer, "test", config)
+    if train_limit:
+        train_data = train_data.select(range(min(train_limit, len(train_data))))
+    if val_limit:
+        val_data = val_data.select(range(min(val_limit, len(val_data))))
+    return train_data, val_data
+
+
 def train(
-    # model/data params
-    base_model: str = "meta-llama/Llama-2-7b-chat-hf",
-    data_dir:  str = "/root/Agents/llama2_finetune/datasets/0418data/Artist",
-    output_dir: str = "/root/Agents/llama2_finetune/models/0418data_artist",
-    # training hyperparams
+    base_model: str = "/remote-home/lbsun/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590",
+    data_dir: str = "/remote-home/lbsun/codex/HIS/datasets/identity_data/Artist",
+    output_dir: str = "/remote-home/lbsun/codex/HIS/models/1116_artist",
     batch_size: int = 64,
     micro_batch_size: int = 2,
-    num_epochs: int = 100,
+    num_epochs: int = 1,
     learning_rate: float = 1e-4,
-    ## cutoff_len: int = 2048,
-    # lora hyperparams
     lora_r: int = 16,
     lora_alpha: int = 16,
     lora_dropout: float = 0.05,
-    lora_target_modules: List[str] = ['q_proj','k_proj','v_proj','o_proj'],
-    # llm hyperparameter
-    train_on_inputs: bool = True,  # if False, masks out inputs in loss
+    lora_target_modules: List[str] = None,
+    train_on_inputs: bool = True,
     add_eos_token: bool = False,
-    group_by_length: bool = True,  # faster, but produces an odd training loss curve
-    # wandb params
-    wandb_project: str = "Agents",
-    wandb_run_name: str = "MOE_artist_flat_0418data_lr1e-4_100epochs",
-    wandb_watch: str = "",  # options: false | gradients | all
-    wandb_log_model: str = "true",  # options: false | true
-    resume_from_checkpoint: str = None,  # either training checkpoint or final adapter
+    group_by_length: bool = True,
+    wandb_project: str = "",
+    resume_from_checkpoint: Optional[str] = None,
+    limit_train_samples: Optional[int] = 10,
+    limit_eval_samples: Optional[int] = 2,
+    cuda_devices: Optional[str] = None,
 ):
+    _configure_environment(cuda_devices)
+    lora_target_modules = lora_target_modules or ["q_proj", "k_proj", "v_proj", "o_proj"]
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         print(
             f"Training LLaMA model with params:\n"
@@ -73,71 +139,34 @@ def train(
             f"train_on_inputs: {train_on_inputs}\n"
             f"add_eos_token: {add_eos_token}\n"
             f"group_by_length: {group_by_length}\n"
-            f"wandb_project: {wandb_project}\n"
-            f"wandb_run_name: {wandb_run_name}\n"
-            f"wandb_watch: {wandb_watch}\n"
-            f"wandb_log_model: {wandb_log_model}\n"
+            # f"wandb_project: {wandb_project}\n"
+            # f"wandb_run_name: {wandb_run_name}\n"
+            # f"wandb_watch: {wandb_watch}\n"
+            # f"wandb_log_model: {wandb_log_model}\n"
             f"resume_from_checkpoint: {resume_from_checkpoint or False}\n"
         )
 
-    gradient_accumulation_steps = batch_size // micro_batch_size
-    print(f"batch_size: {batch_size}")
-    print(f"micro_batch_size: {micro_batch_size}")
-    print(f"gradient_accumulation_steps: {gradient_accumulation_steps}")
-    device_map = "auto"
+    gradient_accumulation_steps = max(batch_size // micro_batch_size, 1)
     world_size = int(os.environ.get("WORLD_SIZE", 1))
-    ddp = world_size != 1
+    ddp = world_size > 1
     if ddp:
-        device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)}
         gradient_accumulation_steps = max(gradient_accumulation_steps // world_size, 1)
-        print(f"gradient_accumulation_steps: {gradient_accumulation_steps}")
-        print(f"world_size: {world_size}")
 
-    print(f"gradient_accumulation_steps: {gradient_accumulation_steps}")
-    print(f"world_size: {world_size}")
-    
-    # Check if parameter passed or if set within environ
-    use_wandb = len(wandb_project) > 0 or (
-        "WANDB_PROJECT" in os.environ and len(os.environ["WANDB_PROJECT"]) > 0
-    )
-    # Only overwrite environ if wandb param passed
-    if len(wandb_project) > 0:
-        os.environ["WANDB_PROJECT"] = wandb_project
-    if len(wandb_watch) > 0:
-        os.environ["WANDB_WATCH"] = wandb_watch
-    if len(wandb_log_model) > 0:
-        os.environ["WANDB_LOG_MODEL"] = wandb_log_model
+    tokenizer = _build_tokenizer(base_model)
 
-    model = LlamaForCausalLM.from_pretrained(
+    local_rank = int(os.environ.get("LOCAL_RANK", -1))
+    device_index = local_rank if ddp and local_rank > -1 else None
+
+    model = _build_model(
         base_model,
-        load_in_8bit=True,
-        torch_dtype=torch.float16,
-        device_map=device_map,
-    )
-    
-    tokenizer = LlamaTokenizer.from_pretrained(base_model)
-    tokenizer.pad_token_id = (0)  # unk. we want this to be different from the eos token
-    tokenizer.padding_side = "left"  # Allow batched inference
-
-    config = MLoraConfig(
-        r=lora_r,
+        tokenizer,
+        lora_r=lora_r,
         lora_alpha=lora_alpha,
-        target_modules=lora_target_modules,
         lora_dropout=lora_dropout,
-        bias="none",
-        task_type="CAUSAL_LM",
-        # adapter_names=[
-        #     ["AGR_high","AGR_low","CON_high","CON_low","EXT_high","EXT_low","NEU_high","NEU_low","OPE_high","OPE_low"],
-        #     ["Doctor","Artist","Programmer"]
-        # ],
-        adapter_names=[["Artist"]],
-        insert_mode="flat",
-        sparse_adapter=False
+        lora_target_modules=lora_target_modules,
+        use_device_map=not ddp,
+        device_index=device_index,
     )
-
-    model = prepare_model_for_int8_training(model)
-    model = MLoraModelForCausalLM(model, config)
-
     if resume_from_checkpoint:
         print("pass if")
         # Check the available weights and load them
@@ -163,16 +192,13 @@ def train(
 
     model.print_trainable_parameters()  # Be more transparent about the % of trainable params.
 
-    train_data = get_moe_dataset(data_dir, tokenizer, 'train', config)
-    val_data = get_moe_dataset(data_dir, tokenizer, 'test', config)
-
-    if not ddp and torch.cuda.device_count() > 1:
-        # keeps Trainer from trying its own DataParallelism when more than 1 gpu is available
-        model.is_parallelizable = True
-        model.model_parallel = True
-
-    for batch in train_data:
-        print(batch)
+    train_data, val_data = _load_datasets(
+        data_dir,
+        tokenizer,
+        model.config,
+        limit_train_samples,
+        limit_eval_samples,
+    )
 
     trainer = transformers.Trainer(
         model=model,
@@ -194,31 +220,25 @@ def train(
             fp16=True,
             logging_strategy='steps',
             logging_dir=output_dir + "/logs",
-            logging_steps=20,
+            logging_steps=1,
             optim="adamw_torch",
-            evaluation_strategy="steps",
-            eval_steps=100,
+            eval_strategy="steps",
+            eval_steps=1,
             # eval_accumulation_steps=5,
             save_strategy="steps",
-            save_steps=200,
+            save_steps=5,
             output_dir=output_dir,
-            save_total_limit=40,
+            save_total_limit=5,
             save_safetensors=False,
             ddp_find_unused_parameters=False if ddp else None,
             # ddp_find_unused_parameters=True,
             group_by_length=group_by_length,
-            report_to="wandb" if use_wandb else None,
-            run_name=wandb_run_name if use_wandb else None,
+            report_to="wandb" if wandb_project else None,
+            run_name=None,
+            remove_unused_columns=False,
         ),
     )
     model.config.use_cache = False
-
-    # old_state_dict = model.state_dict
-    # model.state_dict = (
-    #     lambda self, *_, **__: get_peft_model_state_dict(
-    #         self, old_state_dict()
-    #     )
-    # ).__get__(model, type(model))
 
     if torch.__version__ >= "2" and sys.platform != "win32":
         model = torch.compile(model)

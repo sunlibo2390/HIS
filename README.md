@@ -70,7 +70,7 @@ Rules enforced by `his.data.dataset`:
 
 ## Training (MOE LoRA Fine-Tuning)
 
-Entry module: `his.training.train_moe_lora`. Invoke it with `python -m his.training.train_moe_lora` (or add `PYTHONPATH=src` and call the file directly). It wraps Hugging Face `Trainer` and inserts MLora adapters into `['q_proj','k_proj','v_proj','o_proj']`.
+Entry script: `src/his/training/train_moe_lora.py`. Run it directly (`python src/his/training/train_moe_lora.py …`, optionally after `pip install -e .`) and it wraps Hugging Face `Trainer` while inserting MLora adapters into `['q_proj','k_proj','v_proj','o_proj']`.
 
 ### Adapter Configuration
 
@@ -86,7 +86,7 @@ Entry module: `his.training.train_moe_lora`. Invoke it with `python -m his.train
 Single GPU:
 
 ```bash
-python -m his.training.train_moe_lora \
+python src/his/training/train_moe_lora.py \
   --num_epochs 1 \
   --batch_size 4 \
   --micro_batch_size 2 \
@@ -100,7 +100,7 @@ Multi GPU (4 cards with `torchrun` – device assignment handled via `LOCAL_RANK
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
 torchrun --nproc_per_node=4 --master_port=29501 \
-  -m his.training.train_moe_lora \
+  src/his/training/train_moe_lora.py \
   --num_epochs 1 \
   --batch_size 8 \
   --micro_batch_size 2 \
@@ -118,7 +118,7 @@ Notes:
 
 ## Inference
 
-`his.inference.inference_cli` loads the base model in 8-bit, stitches in saved adapters, and exposes a Fire CLI. Paths can be passed via CLI flags or environment variables (`HIS_BASE_MODEL`, `HIS_LORA_WEIGHTS`, `HIS_SCALE_PATH`, `HIS_SCALES_DIR`).
+`src/his/inference/inference_cli.py` loads the base model in 8-bit, stitches in saved adapters, and exposes a Fire CLI. Paths can be passed via CLI flags or environment variables (`HIS_BASE_MODEL`, `HIS_LORA_WEIGHTS`, `HIS_SCALE_PATH`, `HIS_SCALES_DIR`). Use `--mode single` for a one-shot completion, or `--mode multi` to keep a running dialogue for `max_turns` user–assistant exchanges.
 
 - Specify the adapter checkpoint via `--lora_weights` (defaults to `models/1116_artist`). Pass a checkpoint such as `models/test_pkg_cuda0123` to load your latest finetune.
 - Provide adapters to activate via `--active_adapter_names`. The script sanitizes the list: duplicates removed, opposing polarities trimmed, and professions restricted to zero/one selection. If you request nothing, it falls back to `["Artist"]`.
@@ -127,7 +127,7 @@ Notes:
 Example: **single adapter** (profession only):
 
 ```bash
-python -m his.inference.inference_cli \
+python src/his/inference/inference_cli.py \
   --mode multi \
   --max_turns 1 \
   --user_prompt "What's your profession?" \
@@ -139,7 +139,7 @@ python -m his.inference.inference_cli \
 Example: **multiple adapters** (profession + two traits):
 
 ```bash
-python -m his.inference.inference_cli \
+python src/his/inference/inference_cli.py \
   --mode multi \
   --max_turns 1 \
   --user_prompt "Would you like to hang out this weekend?" \
